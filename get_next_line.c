@@ -1,101 +1,118 @@
-#include <stdio.h>
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        ::::::::            */
+/*   get_next_line.c                                    :+:    :+:            */
+/*                                                     +:+                    */
+/*   By: rarruda <marvin@codam.nl>                    +#+                     */
+/*                                                   +#+                      */
+/*   Created: 2021/08/05 17:56:48 by rarruda       #+#    #+#                 */
+/*   Updated: 2021/08/05 17:57:25 by rarruda       ########   odam.nl         */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*first_time(int fd, char *save, char *copy)
+char	*make_line(char **line, char *save)
+{
+	char	*copy;
+	size_t	len_line;
+	size_t	len_save;
+
+	len_line = ft_strlen(*line);
+	len_save = ft_strlen(save);
+	copy = malloc((len_line + len_save + 1) * sizeof(char));
+	if (copy == NULL)
+		return (NULL);
+	ft_strlcpy(copy, *line, (len_line + 1));
+	ft_strlcat(copy, save, (len_line + len_save + 1));
+	free(*line);
+	*line = NULL;
+	return (copy);
+}
+
+int	check_errors(char **str, int value)
+{
+	if (value < 0)
+	{
+		free(*str);
+		*str = NULL;
+		return (-1);
+	}
+	return (0);
+}
+
+char	*read_text(int fd, char *save, char *line)
 {
 	int	i;
 
-	copy = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (save == NULL || copy == NULL)
-		return (NULL);
 	i = read(fd, save, BUFFER_SIZE);
+	if (check_errors(&line, i) == -1)
+		return (NULL);
 	save[i] = '\0';
-	ft_strlcpy(copy, save, (BUFFER_SIZE + 1));
+	if (i == 0)
+		return (line);
+	line = make_line(&line, save);
+	if (line == NULL)
+		return (NULL);
 	while (check_buffer(save) < 0)
 	{
 		i = read(fd, save, BUFFER_SIZE);
+		if (check_errors(&line, i) == -1)
+			return (NULL);
 		save[i] = '\0';
-		make_line(copy, save);
-		if (copy == NULL)
+		if (i == 0)
+			return (line);
+		line = make_line(&line, save);
+		if (line == NULL)
 			return (NULL);
 	}
-	return (copy);
+	return (line);
 }
 
-char	*other_times(int fd, char *save, char *copy)
-{
-	int	k;
-
-	free(save);
-	save = malloc((BUFFER_SIZE + 1) * sizeof(char));
-	if (save == NULL)
-		return (NULL);
-	if (check_buffer(copy) < 0)
-	{
-		k = read(fd, save, BUFFER_SIZE);
-		save[k] = '\0';
-		if (k == 0)
-			return (NULL);
-		make_line(copy, save);
-		if (copy == NULL)
-			return (NULL);
-		while (check_buffer(save) < 0)
-		{
-			k = read(fd, save, BUFFER_SIZE);
-			save[k] = '\0';
-			make_line(copy, save);
-			if (copy == NULL)
-				return (NULL);
-		}
-	}
-	return (copy);
-}
-
-char	*result(char *copy, char *save)
+char	*result(char *line, char *save)
 {
 	int		i;
-	char	*line;
+	char	*copy;
 
 	i = 0;
-	while (copy[i] != '\n' && copy[i] != '\0')
+	while (line[i] != '\n' && line[i] != '\0')
 		i++;
-	line = malloc((i + 2) * sizeof(char));
-	if (line == NULL)
+	copy = malloc((i + 2) * sizeof(char));
+	if (copy == NULL)
 		return (NULL);
-	ft_strlcpy(line, copy, i + 2);
-	free(save);
-	save = malloc((ft_strlen(copy) - i) * sizeof(char));
-	if (save == NULL)
-		return (NULL);
-	ft_strlcpy(save, (copy + i + 1), (ft_strlen(copy) - i));
-	free(copy);
-	return (line);
+	ft_strlcpy(copy, line, i + 2);
+	if (ft_strlen(line) - i > 0)
+		ft_strlcpy(save, (line + i + 1), (ft_strlen(line) - i));
+	free(line);
+	line = NULL;
+	return (copy);
 }
 
 char	*get_next_line(int fd)
 {
-	static char	*save;
-	char		*copy;
+	static char	save[BUFFER_SIZE + 1];
+	char		*line;
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, NULL, 0) < 0)
 		return (NULL);
-	if (save != NULL)
+	line = malloc((ft_strlen(save) + 1) * sizeof(char));
+	if (line == NULL)
+		return (NULL);
+	ft_strlcpy(line, save, (ft_strlen(save) + 1));
+	if (check_buffer(line) < 0)
 	{
-		copy = malloc((ft_strlen(save) + 1) * sizeof(char));
-		if (copy == NULL)
+		line = read_text(fd, save, line);
+		if (line == NULL || ft_strlen(line) == 0)
+		{
+			check_errors(&line, -1);
 			return (NULL);
-		ft_strlcpy(copy, save, (ft_strlen(save) + 1));
-		copy = other_times(fd, save, copy);
-		if (copy == NULL)
-			return (NULL);		
+		}
 	}
-	if (save == NULL)
+	line = result(line, save);
+	if (line == NULL)
 	{
-		save = malloc((BUFFER_SIZE + 1) * sizeof(char));
-		copy = first_time(fd, save, copy);
-		if (copy == NULL)
-			return (NULL);		
+		check_errors(&line, -1);
+		return (NULL);
 	}
-	return (result(copy, save));
+	return (line);
 }
