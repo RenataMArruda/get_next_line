@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        ::::::::            */
+/*   get_next_line_utils.c                              :+:    :+:            */
+/*                                                     +:+                    */
+/*   By: rarruda <marvin@codam.nl>                    +#+                     */
+/*                                                   +#+                      */
+/*   Created: 2021/08/05 17:59:54 by rarruda       #+#    #+#                 */
+/*   Updated: 2021/08/05 18:01:06 by rarruda       ########   odam.nl         */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line.h"
 
 int	check_buffer(char *str)
@@ -12,24 +24,6 @@ int	check_buffer(char *str)
 		n++;
 	}
 	return (-1);
-}
-
-char	*make_line(char *copy, char *save)
-{
-	char	*line;
-
-	line = malloc((ft_strlen(copy) + ft_strlen(save) + 1) * sizeof(char));
-	if (line == NULL)
-		return (NULL);
-	ft_strlcpy(line, copy, (ft_strlen(copy) + 1));
-	ft_strlcat(line, save, (ft_strlen(copy) + ft_strlen(save) + 1));
-	free(copy);
-	copy = malloc((ft_strlen(line) + 1) * sizeof(char));
-	if (copy == NULL)
-		return (NULL);
-	ft_strlcpy(copy, line, (ft_strlen(line) + 1));
-	free(line);
-	return (copy);
 }
 
 int	ft_strlen(const char *str)
