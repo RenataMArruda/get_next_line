@@ -1,3 +1,5 @@
 This is my second project for Codam (42 school from Amsterdam).
 
 It is about programming a function that returns a line read from a file descriptor.
+
+Here we learn about static variables.
